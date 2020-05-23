@@ -83,13 +83,11 @@ app_license = "MIT"
 # ---------------
 # Hook on document methods and events
 
-# doc_events = {
-# 	"*": {
-# 		"on_update": "method",
-# 		"on_cancel": "method",
-# 		"on_trash": "method"
-#	}
-# }
+doc_events = {
+	"Payment Entry": {
+		"on_submit": "cloud_extel.cloud_extel.deferred_tds.post_tds_gl_entries",
+	}
+}
 
 # Scheduled Tasks
 # ---------------
@@ -134,4 +132,28 @@ app_license = "MIT"
 # exempt linked doctypes from being automatically cancelled
 #
 # auto_cancel_exempted_doctypes = ["Auto Repeat"]
+
+fixtures = [
+	{
+		"dt": "DocType",
+		"filters": [["name", "in", [
+			"TDS Accounts"
+		]]]
+	},
+	{
+		"dt": "Custom Field",
+		"filters": [["name", "in", [
+			"Customer-post_tds_entries",
+			"Company-tds_settings",
+			"Company-accounts",
+			"Company-gross_tds_account"
+		]]]
+	},
+	{
+		"dt": "Custom Script",
+		"filters": [["name", "in", [
+			"Company-Client"
+		]]]
+	}
+]
 
