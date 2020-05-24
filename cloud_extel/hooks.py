@@ -143,7 +143,6 @@ fixtures = [
 	{
 		"dt": "Custom Field",
 		"filters": [["name", "in", [
-			"Customer-post_tds_entries",
 			"Company-tds_settings",
 			"Company-accounts",
 			"Company-gross_tds_account"
@@ -152,7 +151,14 @@ fixtures = [
 	{
 		"dt": "Custom Script",
 		"filters": [["name", "in", [
-			"Company-Client"
+			"Company-Client",
+			"Sales Invoice-Client"
+		]]]
+	},
+	{
+		"dt": "Server Script",
+		"filters": [["name", "in", [
+			"Income Account Query"
 		]]]
 	}
 ]
