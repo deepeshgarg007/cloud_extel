@@ -30,7 +30,7 @@ def post_tds_gl_entries(payment_entry, method):
 
 								tds_account = account_fiscal_year_map.get(fiscal_year)
 
-								tds_amount_to_consider = d.amount * (item.amount/doc.net_total)
+								tds_amount_to_consider = d.amount * (item.amount/doc.grand_total)
 
 								amount = tds_amount_to_consider / no_of_months
 
