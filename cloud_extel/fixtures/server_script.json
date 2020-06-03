@@ -6,7 +6,7 @@
   "docstatus": 0,
   "doctype": "Server Script",
   "doctype_event": "Before Insert",
-  "modified": "2020-05-24 21:14:57.031847",
+  "modified": "2020-06-03 15:04:50.840105",
   "name": "Income Account Query",
   "parent": null,
   "parentfield": null,

@@ -137,7 +137,13 @@ fixtures = [
 	{
 		"dt": "DocType",
 		"filters": [["name", "in", [
-			"TDS Accounts"
+			"TDS Accounts",
+			"Telecom Circle",
+			"City",
+			"Zone",
+			"Telecom Region",
+			"Allowed Revenue Accounts Detail",
+			"Allowed Revenue Account"
 		]]]
 	},
 	{
@@ -145,7 +151,10 @@ fixtures = [
 		"filters": [["name", "in", [
 			"Company-tds_settings",
 			"Company-accounts",
-			"Company-gross_tds_account"
+			"Company-gross_tds_account",
+			"Address-cost_center",
+			"Address-telecom_circle",
+			"Address-telecom_region"
 		]]]
 	},
 	{
