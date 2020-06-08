@@ -86,29 +86,32 @@ app_license = "MIT"
 doc_events = {
 	"Payment Entry": {
 		"on_submit": "cloud_extel.cloud_extel.deferred_tds.post_tds_gl_entries",
+	},
+	"Purchase Invoice": {
+		"on_submit": "cloud_extel.cloud_extel.deferred_tds.validate_purchase_invoice",
 	}
 }
 
 # Scheduled Tasks
 # ---------------
 
-# scheduler_events = {
-# 	"all": [
-# 		"cloud_extel.tasks.all"
-# 	],
-# 	"daily": [
-# 		"cloud_extel.tasks.daily"
-# 	],
-# 	"hourly": [
-# 		"cloud_extel.tasks.hourly"
-# 	],
-# 	"weekly": [
-# 		"cloud_extel.tasks.weekly"
-# 	]
-# 	"monthly": [
-# 		"cloud_extel.tasks.monthly"
-# 	]
-# }
+scheduler_events = {
+	# "all": [
+	# 	"cloud_extel.tasks.all"
+	# ],
+	# "daily": [
+	# 	"cloud_extel.tasks.daily"
+	# ],
+	# "hourly": [
+	# 	"cloud_extel.tasks.hourly"
+	# ],
+	# "weekly": [
+	# 	"cloud_extel.tasks.weekly"
+	# ]
+	"monthly": [
+		"cloud_extel.cloud_extel.deferred_tds.post_grn_entries"
+	]
+}
 
 # Testing
 # -------
