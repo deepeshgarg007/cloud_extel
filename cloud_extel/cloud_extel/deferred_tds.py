@@ -166,7 +166,7 @@ def validate_purchase_invoice(doc, method):
 			""", (voucher_detail, expense_account)
 		)[0][0]
 
-		if doc.net_total > booked_expense:
+		if doc.net_total > flt(booked_expense):
 			frappe.throw(_("Row {0}: Purchase Receipt for Item {1} is created only for amount {2}").format(
 				item.idx, frappe.bold(item.item_code), frappe.bold(booked_expense)))
 		else:
