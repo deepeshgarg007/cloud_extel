@@ -157,14 +157,21 @@ fixtures = [
 			"Company-gross_tds_account",
 			"Address-cost_center",
 			"Address-telecom_circle",
-			"Address-telecom_region"
+			"Address-telecom_region",
+			"Company-provision_account",
+			"Purchase Receipt Item-months",
+			"Purchase Receipt Item-site",
+			"Purchase Order Item-site",
+			"Purchase Order Item-months",
+			"Purchase Order-purchase_order_type"
 		]]]
 	},
 	{
 		"dt": "Custom Script",
 		"filters": [["name", "in", [
 			"Company-Client",
-			"Sales Invoice-Client"
+			"Sales Invoice-Client",
+			"Purchase Order-Client"
 		]]]
 	},
 	{
