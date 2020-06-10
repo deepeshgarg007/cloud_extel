@@ -167,6 +167,13 @@ fixtures = [
 		]]]
 	},
 	{
+		"dt": "Property Setter",
+		"filters": [["name", "in", [
+			"Purchase Order Item-schedule_date-columns",
+			"Purchase Order Item-uom-in_list_view"
+		]]]
+	},
+	{
 		"dt": "Custom Script",
 		"filters": [["name", "in", [
 			"Company-Client",
