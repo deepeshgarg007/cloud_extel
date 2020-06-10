@@ -110,12 +110,12 @@ def post_grn_entries(posting_date=None):
 	voucher_detail_no_list = [d.name for d in purchase_receipt_items]
 
 	booked_grn_amounts_map = frappe._dict(frappe.db.sql("""
-		SELECT voucher_detail_no, sum(debit_in_account_currency)
+		SELECT voucher_detail_no, sum(credit_in_account_currency) as amount
 		FROM `tabGL Entry`
 		WHERE voucher_type = 'Purchase Receipt' and
 		voucher_detail_no in (%s)
 		GROUP BY voucher_detail_no
-	""" % (','.join(['%s'] * len(voucher_detail_no_list))), tuple(voucher_detail_no_list), as_dict=1))
+	""" % (','.join(['%s'] * len(voucher_detail_no_list))), tuple(voucher_detail_no_list), as_list=1))
 
 	for pr in purchase_receipt_items:
 		if pr.base_net_amount > flt(booked_grn_amounts_map.get(pr.name)):
@@ -166,7 +166,9 @@ def validate_purchase_invoice(doc, method):
 			""", (voucher_detail, expense_account)
 		)[0][0]
 
-		if doc.net_total > flt(booked_expense):
+		allow_without_pr = frappe.db.get_value('Supplier', doc.supplier, 'allow_purchase_invoice_creation_without_purchase_receipt')
+
+		if doc.net_total > flt(booked_expense) and not allow_without_pr:
 			frappe.throw(_("Row {0}: Purchase Receipt for Item {1} is created only for amount {2}").format(
 				item.idx, frappe.bold(item.item_code), frappe.bold(booked_expense)))
 		else:
