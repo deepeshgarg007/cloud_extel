@@ -146,7 +146,8 @@ fixtures = [
 			"Zone",
 			"Telecom Region",
 			"Allowed Revenue Accounts Detail",
-			"Allowed Revenue Account"
+			"Allowed Revenue Account",
+			"Business Segment"
 		]]]
 	},
 	{
