@@ -1,0 +1,5 @@
+{
+	"cloud_extel/js/cloud_extel.js": [
+		"public/js/dimension_filter.js"
+	]
+}

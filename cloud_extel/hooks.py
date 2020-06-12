@@ -16,7 +16,7 @@ app_license = "MIT"
 
 # include js, css files in header of desk.html
 # app_include_css = "/assets/cloud_extel/css/cloud_extel.css"
-# app_include_js = "/assets/cloud_extel/js/cloud_extel.js"
+app_include_js = "/assets/cloud_extel/js/cloud_extel.js"
 
 # include js, css files in header of web template
 # web_include_css = "/assets/cloud_extel/css/cloud_extel.css"
