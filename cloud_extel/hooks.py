@@ -87,9 +87,6 @@ doc_events = {
 	"Payment Entry": {
 		"on_submit": "cloud_extel.cloud_extel.deferred_tds.post_tds_gl_entries",
 	},
-	"Purchase Invoice": {
-		"on_submit": "cloud_extel.cloud_extel.deferred_tds.validate_purchase_invoice",
-	}
 }
 
 # Scheduled Tasks
@@ -159,7 +156,8 @@ fixtures = [
 			"Address-cost_center",
 			"Address-telecom_circle",
 			"Address-telecom_region",
-			"Company-provision_account",
+			"Contact-cost_center",
+			"Contact-telecom_circle",
 			"Purchase Receipt Item-months",
 			"Purchase Receipt Item-site",
 			"Purchase Order Item-site",

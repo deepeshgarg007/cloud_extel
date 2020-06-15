@@ -85,112 +85,112 @@ def post_tds_gl_entries(payment_entry, method):
 					make_gl_entries(gl_entries)
 
 
-def post_grn_entries(posting_date=None):
-	if not posting_date:
-		posting_date = add_days(getdate(), -1)
+# def post_grn_entries(posting_date=None):
+# 	if not posting_date:
+# 		posting_date = add_days(getdate(), -1)
 
-	accounting_dimensions = get_accounting_dimensions()
+# 	accounting_dimensions = get_accounting_dimensions()
 
-	dimension_fields = ['i.cost_center']
+# 	dimension_fields = ['i.cost_center']
 
-	for dimension in accounting_dimensions:
-		dimension_fields.append('i.{0}'.format(dimension))
+# 	for dimension in accounting_dimensions:
+# 		dimension_fields.append('i.{0}'.format(dimension))
 
-	purchase_receipt_items = frappe.db.sql("""
-		SELECT i.name, i.item_code, i.parent, i.base_net_amount, i.months,
-			i.expense_account, i.cost_center, i.project, {dimension_fields}
-		FROM `tabPurchase Receipt Item` i, `tabPurchase Receipt` p
-		WHERE i.parent = p.name
-			and i.is_fixed_asset = 0
-			and p.posting_date <= %s
-			and p.docstatus = 1
-			and p.status = 'To Bill'
-	""".format(dimension_fields = ', '.join(dimension_fields)), (posting_date), as_dict=1)
+# 	purchase_receipt_items = frappe.db.sql("""
+# 		SELECT i.name, i.item_code, i.parent, i.base_net_amount, i.months,
+# 			i.expense_account, i.cost_center, i.project, {dimension_fields}
+# 		FROM `tabPurchase Receipt Item` i, `tabPurchase Receipt` p
+# 		WHERE i.parent = p.name
+# 			and i.is_fixed_asset = 0
+# 			and p.posting_date <= %s
+# 			and p.docstatus = 1
+# 			and p.status = 'To Bill'
+# 	""".format(dimension_fields = ', '.join(dimension_fields)), (posting_date), as_dict=1)
 
-	voucher_detail_no_list = [d.name for d in purchase_receipt_items]
+# 	voucher_detail_no_list = [d.name for d in purchase_receipt_items]
 
-	booked_grn_amounts_map = frappe._dict(frappe.db.sql("""
-		SELECT voucher_detail_no, sum(credit_in_account_currency) as amount
-		FROM `tabGL Entry`
-		WHERE voucher_type = 'Purchase Receipt' and
-		voucher_detail_no in (%s)
-		GROUP BY voucher_detail_no
-	""" % (','.join(['%s'] * len(voucher_detail_no_list))), tuple(voucher_detail_no_list), as_list=1))
+# 	booked_grn_amounts_map = frappe._dict(frappe.db.sql("""
+# 		SELECT voucher_detail_no, sum(credit_in_account_currency) as amount
+# 		FROM `tabGL Entry`
+# 		WHERE voucher_type = 'Purchase Receipt' and
+# 		voucher_detail_no in (%s)
+# 		GROUP BY voucher_detail_no
+# 	""" % (','.join(['%s'] * len(voucher_detail_no_list))), tuple(voucher_detail_no_list), as_list=1))
 
-	for pr in purchase_receipt_items:
-		if pr.base_net_amount > flt(booked_grn_amounts_map.get(pr.name)):
-			doc = frappe.get_cached_doc('Purchase Receipt', pr.parent)
+# 	for pr in purchase_receipt_items:
+# 		if pr.base_net_amount > flt(booked_grn_amounts_map.get(pr.name)):
+# 			doc = frappe.get_cached_doc('Purchase Receipt', pr.parent)
 
-			expense_account = frappe.get_cached_value('Company', doc.company, 'default_expense_account')
-			provision_account = frappe.get_cached_value('Company', doc.company, 'provision_account')
+# 			expense_account = frappe.get_cached_value('Company', doc.company, 'default_expense_account')
+# 			provision_account = frappe.get_cached_value('Company', doc.company, 'provision_account')
 
-			stock_items = doc.get_stock_items()
-			if pr.item_code not in stock_items:
-				gl_entries = []
-				months = pr.months or 12
-				amount = pr.base_net_amount / months
+# 			stock_items = doc.get_stock_items()
+# 			if pr.item_code not in stock_items:
+# 				gl_entries = []
+# 				months = pr.months or 12
+# 				amount = pr.base_net_amount / months
 
-				gl_entries.append(doc.get_gl_dict({
-					'account': pr.expense_account or expense_account,
-					'debit': amount,
-					'debit_in_account_currency': amount,
-					'voucher_detail_no': pr.name,
-					'posting_date': posting_date,
-					'cost_center': pr.cost_center,
-					'project': pr.project
-				}, item=pr))
+# 				gl_entries.append(doc.get_gl_dict({
+# 					'account': pr.expense_account or expense_account,
+# 					'debit': amount,
+# 					'debit_in_account_currency': amount,
+# 					'voucher_detail_no': pr.name,
+# 					'posting_date': posting_date,
+# 					'cost_center': pr.cost_center,
+# 					'project': pr.project
+# 				}, item=pr))
 
-				gl_entries.append(doc.get_gl_dict({
-					'account': provision_account,
-					'credit': amount,
-					'credit_in_account_currency': amount,
-					'voucher_detail_no': pr.name,
-					'posting_date': posting_date,
-					'cost_center': pr.cost_center,
-					'project': pr.project
-				}, item=pr))
+# 				gl_entries.append(doc.get_gl_dict({
+# 					'account': provision_account,
+# 					'credit': amount,
+# 					'credit_in_account_currency': amount,
+# 					'voucher_detail_no': pr.name,
+# 					'posting_date': posting_date,
+# 					'cost_center': pr.cost_center,
+# 					'project': pr.project
+# 				}, item=pr))
 
-				make_gl_entries(gl_entries)
+# 				make_gl_entries(gl_entries)
 
-def validate_purchase_invoice(doc, method):
-	for item in doc.get('items'):
-		expense_account = item.expense_account
-		voucher_detail = item.pr_detail
+# def validate_purchase_invoice(doc, method):
+# 	for item in doc.get('items'):
+# 		expense_account = item.expense_account
+# 		voucher_detail = item.pr_detail
 
-		provision_account = frappe.get_cached_value('Company', doc.company, 'provision_account')
+# 		provision_account = frappe.get_cached_value('Company', doc.company, 'provision_account')
 
-		booked_expense = frappe.db.sql(
-			"""
-				SELECT sum(debit_in_account_currency - credit_in_account_currency)
-				FROM `tabGL Entry` where voucher_detail_no = %s and account = %s
-			""", (voucher_detail, expense_account)
-		)[0][0]
+# 		booked_expense = frappe.db.sql(
+# 			"""
+# 				SELECT sum(debit_in_account_currency - credit_in_account_currency)
+# 				FROM `tabGL Entry` where voucher_detail_no = %s and account = %s
+# 			""", (voucher_detail, expense_account)
+# 		)[0][0]
 
-		allow_without_pr = frappe.db.get_value('Supplier', doc.supplier, 'allow_purchase_invoice_creation_without_purchase_receipt')
+# 		allow_without_pr = frappe.db.get_value('Supplier', doc.supplier, 'allow_purchase_invoice_creation_without_purchase_receipt')
 
-		if doc.net_total > flt(booked_expense) and not allow_without_pr:
-			frappe.throw(_("Row {0}: Purchase Receipt for Item {1} is created only for amount {2}").format(
-				item.idx, frappe.bold(item.item_code), frappe.bold(booked_expense)))
-		else:
-			gl_entries = []
-			gl_entries.append(doc.get_gl_dict({
-				'account': provision_account,
-				'debit': doc.base_net_total,
-				'debit_in_account_currency': doc.base_net_total,
-				'voucher_detail_no': voucher_detail,
-				'posting_date': doc.posting_date,
-				'cost_center': item.cost_center,
-				'project': item.project
-			}, item=item))
+# 		if doc.net_total > flt(booked_expense) and not allow_without_pr:
+# 			frappe.throw(_("Row {0}: Purchase Receipt for Item {1} is created only for amount {2}").format(
+# 				item.idx, frappe.bold(item.item_code), frappe.bold(booked_expense)))
+# 		else:
+# 			gl_entries = []
+# 			gl_entries.append(doc.get_gl_dict({
+# 				'account': provision_account,
+# 				'debit': doc.base_net_total,
+# 				'debit_in_account_currency': doc.base_net_total,
+# 				'voucher_detail_no': voucher_detail,
+# 				'posting_date': doc.posting_date,
+# 				'cost_center': item.cost_center,
+# 				'project': item.project
+# 			}, item=item))
 
-			gl_entries.append(doc.get_gl_dict({
-				'account': expense_account,
-				'credit': doc.base_net_total,
-				'credit_in_account_currency': doc.base_net_total,
-				'voucher_detail_no': voucher_detail,
-				'posting_date': doc.posting_date,
-				'cost_center': item.cost_center,
-				'project': item.project
-			}, item=item))
+# 			gl_entries.append(doc.get_gl_dict({
+# 				'account': expense_account,
+# 				'credit': doc.base_net_total,
+# 				'credit_in_account_currency': doc.base_net_total,
+# 				'voucher_detail_no': voucher_detail,
+# 				'posting_date': doc.posting_date,
+# 				'cost_center': item.cost_center,
+# 				'project': item.project
+# 			}, item=item))
 
-			make_gl_entries(gl_entries)
+# 			make_gl_entries(gl_entries)
