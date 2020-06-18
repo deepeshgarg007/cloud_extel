@@ -169,7 +169,13 @@ fixtures = [
 			"Purchase Order Item-site",
 			"Purchase Order Item-months",
 			"Purchase Order-purchase_order_type",
-			"Company-provision_account"
+			"Company-provision_account",
+			"Sales Invoice Item-end_date",
+			"Sales Invoice Item-start_date",
+			"Delivery Note Item-deferred_revenue",
+			"Delivery Note Item-deferred_revenue_account",
+			"Delivery Note Item-end_date",
+			"Delivery Note Item-start_date"
 		]]]
 	},
 	{
@@ -184,7 +190,8 @@ fixtures = [
 		"filters": [["name", "in", [
 			"Company-Client",
 			"Sales Invoice-Client",
-			"Purchase Order-Client"
+			"Purchase Order-Client",
+			"Delivery Note-Client"
 		]]]
 	},
 	{

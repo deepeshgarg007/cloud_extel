@@ -2,6 +2,17 @@
  {
   "docstatus": 0,
   "doctype": "Custom Script",
+  "dt": "Delivery Note",
+  "modified": "2020-06-18 09:53:41.071936",
+  "name": "Delivery Note-Client",
+  "parent": null,
+  "parentfield": null,
+  "parenttype": null,
+  "script": "frappe.ui.form.on('Delivery Note Item', {\n\tdeferred_revenue: function(frm, cdt, cdn) {\n\t\tlet row = locals[cdt][cdn];\n\t\tif (!row.deferred_revenue_account && row.deferred_revenue) {\n\t\t    frappe.db.get_value('Company', frm.doc.company, 'default_deferred_revenue_account', function(value) {\n\t\t        frappe.model.set_value(cdt, cdn, 'deferred_revenue_account', value.default_deferred_revenue_account);\n\t\t    });\n\t\t}\n\t}\n})"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Custom Script",
   "dt": "Company",
   "modified": "2020-05-15 21:17:16.200853",
   "name": "Company-Client",
