@@ -5,8 +5,9 @@
 from __future__ import unicode_literals
 import frappe
 from frappe.model.document import Document
-from cloud_extel.cloud_extel.deferred_tds import post_grn_entries
+from cloud_extel.cloud_extel.deferred_tds import post_delivery_note_entries
 
-class ProcessGRNEntries(Document):
+class ProcessDeliveryNote(Document):
 	def on_submit(self):
-		post_grn_entries(posting_date=self.posting_date)
+		post_delivery_note_entries(self.start_date, self.end_date)
+

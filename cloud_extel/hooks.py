@@ -87,6 +87,12 @@ doc_events = {
 	"Payment Entry": {
 		"on_submit": "cloud_extel.cloud_extel.deferred_tds.post_tds_gl_entries",
 	},
+	"Delivery Note": {
+		"on_submit": "cloud_extel.cloud_extel.deferred_tds.make_gl_entries_on_dn_submit"
+	},
+	"Sales Invoice": {
+		"on_submit": "cloud_extel.cloud_extel.deferred_tds.reverse_provision_entry"
+	}
 }
 
 # Scheduled Tasks
@@ -106,7 +112,7 @@ scheduler_events = {
 	# 	"cloud_extel.tasks.weekly"
 	# ]
 	"monthly": [
-		"cloud_extel.cloud_extel.deferred_tds.post_grn_entries"
+		"cloud_extel.cloud_extel.deferred_tds.post_delivery_note_entries"
 	]
 }
 
@@ -162,7 +168,8 @@ fixtures = [
 			"Purchase Receipt Item-site",
 			"Purchase Order Item-site",
 			"Purchase Order Item-months",
-			"Purchase Order-purchase_order_type"
+			"Purchase Order-purchase_order_type",
+			"Company-provision_account"
 		]]]
 	},
 	{
