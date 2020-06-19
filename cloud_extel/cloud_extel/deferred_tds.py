@@ -344,92 +344,77 @@ def make_gl_entries_for_dn(doc, credit_account, debit_account, against,
 
 			frappe.flags.deferred_accounting_error = True
 
-def book_ltds(doc, method):
-	gross_tds_account = frappe.db.get_value('Company', doc.company, 'gross_tds_account')
-	gl_entries = []
-	for d in accounts:
-		if d.account == gross_tds_account and d.sales_invoice and d.credit:
-			doc = frappe.get_doc('Sales Invoice', d.sales_invoice)
-			for item in doc.get('items'):
-				service_start_date = getdate(item.start_date)
-				service_end_date = getdate(item.end_date)
+# def book_ltds(doc, method):
+# 	gross_tds_account = frappe.db.get_value('Company', doc.company, 'gross_tds_account')
+# 	gl_entries = []
+# 	for d in accounts:
+# 		if d.account == gross_tds_account and d.sales_invoice and d.credit:
+# 			doc = frappe.get_doc('Sales Invoice', d.sales_invoice)
+# 			for item in doc.get('items'):
+# 				service_start_date = getdate(item.start_date)
+# 				service_end_date = getdate(item.end_date)
 
-				if service_start_date and service_end_date:
-					no_of_months = (service_end_date.year - service_start_date.year) * 12 + \
-						(service_end_date.month - service_start_date.month) + 1
+# 				if service_start_date and service_end_date:
+# 					no_of_months = (service_end_date.year - service_start_date.year) * 12 + \
+# 						(service_end_date.month - service_start_date.month) + 1
 
-					for i in range(no_of_months):
-						fiscal_year = get_fiscal_year(date=add_months(service_start_date, i))[0]
+# 					for i in range(no_of_months):
+# 						fiscal_year = get_fiscal_year(date=add_months(service_start_date, i))[0]
 
-						tds_account = account_fiscal_year_map.get(fiscal_year)
+# 						tds_account = account_fiscal_year_map.get(fiscal_year)
 
-						if not tds_account:
-							frappe.throw(_('Please enter TDS Account for Fiscal Year {0} in company master').format(
-								frappe.bold(fiscal_year)))
+# 						if not tds_account:
+# 							frappe.throw(_('Please enter TDS Account for Fiscal Year {0} in company master').format(
+# 								frappe.bold(fiscal_year)))
 
-						tds_amount_to_consider = d.credit * (item.amount /doc.net_total)
+# 						tds_amount_to_consider = d.credit * (item.amount /doc.net_total)
 
-						amount = tds_amount_to_consider / no_of_months
+# 						amount = tds_amount_to_consider / no_of_months
 
-						gl_entries.append(
-							payment_entry.get_gl_dict({
-								"account": tds_account,
-								"against": payment_entry.party,
-								"credit": amount,
-								"credit_in_account_currency": amount,
-								"cost_center": item.cost_center
-							}, payment_entry.party_account_currency, item=item)
-						)
+# 						gl_entries.append(
+# 							payment_entry.get_gl_dict({
+# 								"account": tds_account,
+# 								"against": payment_entry.party,
+# 								"credit": amount,
+# 								"credit_in_account_currency": amount,
+# 								"cost_center": item.cost_center
+# 							}, payment_entry.party_account_currency, item=item)
+# 						)
 
-						gl_entries.append(
-							payment_entry.get_gl_dict({
-								"account": d.account,
-								"against": payment_entry.party,
-								"debit": amount,
-								"debit_in_account_currency": amount,
-								"cost_center": item.cost_center
-							}, payment_entry.party_account_currency, item=item)
-						)
-				else:
-					amount = d.amount * (item.amount/doc.net_total)
-					fiscal_year = get_fiscal_year(date=payment_entry.posting_date)[0]
-					tds_account = account_fiscal_year_map.get(fiscal_year)
+# 						gl_entries.append(
+# 							payment_entry.get_gl_dict({
+# 								"account": d.account,
+# 								"against": payment_entry.party,
+# 								"debit": amount,
+# 								"debit_in_account_currency": amount,
+# 								"cost_center": item.cost_center
+# 							}, payment_entry.party_account_currency, item=item)
+# 						)
+# 				else:
+# 					amount = d.amount * (item.amount/doc.net_total)
+# 					fiscal_year = get_fiscal_year(date=payment_entry.posting_date)[0]
+# 					tds_account = account_fiscal_year_map.get(fiscal_year)
 
-					gl_entries.append(
-						payment_entry.get_gl_dict({
-							"account": tds_account,
-							"against": payment_entry.party,
-							"debit": amount,
-							"debit_in_account_currency": amount,
-							"cost_center": item.cost_center
-						}, payment_entry.party_account_currency, item=item)
-					)
+# 					gl_entries.append(
+# 						payment_entry.get_gl_dict({
+# 							"account": tds_account,
+# 							"against": payment_entry.party,
+# 							"debit": amount,
+# 							"debit_in_account_currency": amount,
+# 							"cost_center": item.cost_center
+# 						}, payment_entry.party_account_currency, item=item)
+# 					)
 
-					gl_entries.append(
-						payment_entry.get_gl_dict({
-							"account": d.account,
-							"against": payment_entry.party,
-							"credit": amount,
-							"credit_in_account_currency": amount,
-							"cost_center": item.cost_center
-						}, payment_entry.party_account_currency, item=item)
-					)
+# 					gl_entries.append(
+# 						payment_entry.get_gl_dict({
+# 							"account": d.account,
+# 							"against": payment_entry.party,
+# 							"credit": amount,
+# 							"credit_in_account_currency": amount,
+# 							"cost_center": item.cost_center
+# 						}, payment_entry.party_account_currency, item=item)
+# 					)
 
-			booked_invoices.append(invoice.reference_name)
+# 			booked_invoices.append(invoice.reference_name)
 
-			make_gl_entries(gl_entries)
-			# doc.get_gl_dict({
-			# 	"account": d.account,
-			# 	"against": d.against_account,
-			# 	"debit": flt(d.debit, d.precision("debit")),
-			# 	"account_currency": d.account_currency,
-			# 	"debit_in_account_currency": flt(d.debit_in_account_currency, d.precision("debit_in_account_currency")),
-			# 	"against_voucher_type": d.reference_type,
-			# 	"against_voucher": d.reference_name,
-			# 	"remarks": remarks,
-			# 	"voucher_detail_no": d.reference_detail_no,
-			# 	"cost_center": d.cost_center,
-			# 	"project": d.project,
-			# 	"finance_book": self.finance_book
-			# })
-
+# 			make_gl_entries(gl_entries)
