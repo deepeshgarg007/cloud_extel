@@ -92,7 +92,10 @@ doc_events = {
 	},
 	"Sales Invoice": {
 		"on_submit": "cloud_extel.cloud_extel.deferred_tds.reverse_provision_entry"
-	}
+	},
+	# "Journal Entry": {
+	# 	"on_submit": "cloud_extel.cloud_extel.deferred_tds.book_ltds"
+	# }
 }
 
 # Scheduled Tasks
@@ -166,6 +169,7 @@ fixtures = [
 			"Contact-telecom_circle",
 			"Purchase Receipt Item-months",
 			"Purchase Receipt Item-site",
+			"Purchase Receipt-purchase_order_type",
 			"Purchase Order Item-site",
 			"Purchase Order Item-months",
 			"Purchase Order-purchase_order_type",

@@ -13,7 +13,6 @@ def post_tds_gl_entries(payment_entry, method):
 			account_fiscal_year_map = frappe._dict(frappe.get_all('TDS Accounts', fields=['fiscal_year', 'tds_account'],
 				filters={'parent': payment_entry.company}, as_list=1))
 
-			gross_tds_account = frappe.db.get_value('Company', payment_entry.company, 'gross_tds_account')
 			booked_invoices = []
 
 			for invoice in payment_entry.get('references'):
@@ -23,14 +22,18 @@ def post_tds_gl_entries(payment_entry, method):
 						service_start_date = getdate(item.start_date)
 						service_end_date = getdate(item.end_date)
 
-						if item.enable_deferred_revenue:
+						if service_start_date and service_end_date:
 							no_of_months = (service_end_date.year - service_start_date.year) * 12 + \
-								(service_end_date.month - service_start_date.month)
+								(service_end_date.month - service_start_date.month) + 1
 
 							for i in range(no_of_months):
 								fiscal_year = get_fiscal_year(date=add_months(service_start_date, i))[0]
 
 								tds_account = account_fiscal_year_map.get(fiscal_year)
+
+								if not tds_account:
+									frappe.throw(_('Please enter TDS Account for Fiscal Year {0} in company master').format(
+										frappe.bold(fiscal_year)))
 
 								tds_amount_to_consider = d.amount * (item.amount /doc.net_total)
 
@@ -88,6 +91,9 @@ def reverse_provision_entry(doc, method):
 	gl_entries = []
 	provision_account = frappe.db.get_value('Company', doc.company, 'provision_account')
 
+	if not provision_account:
+		frappe.throw(_('Provision Account not selected in Company Master'))
+
 	for item in doc.get('items'):
 		gl_entries.append(doc.get_gl_dict({
 			"account": provision_account,
@@ -114,16 +120,23 @@ def reverse_provision_entry(doc, method):
 def make_gl_entries_on_dn_submit(doc, method):
 	gl_entries = []
 	provision_account = frappe.db.get_value('Company', doc.company, 'provision_account')
-	stock_items = doc.get_stock_items()
 
+	if not provision_account:
+		frappe.throw(_('Provision Account not selected in Company Master'))
+
+	stock_items = doc.get_stock_items()
 	for item in doc.get('items'):
 		if item.item_code in stock_items:
 			continue
 
 		if item.get('deferred_revenue'):
 			debit_account = item.deferred_revenue_account or frappe.db.get_value('Company', doc.company, 'default_deferred_income_account')
+			if not debit_account:
+				frappe.throw(_('Please select Deferred revenue account for item {0}').format(item.item_code))
 		else:
 			debit_account = frappe.db.get_value('Item Default', {'company': doc.company}, 'income_account')
+			if not debit_account:
+				frappe.throw(_('Please set default Income Account for Item {0}').format(item.item_code))
 
 		gl_entries.append(doc.get_gl_dict({
 			"account": debit_account,
@@ -131,7 +144,6 @@ def make_gl_entries_on_dn_submit(doc, method):
 			"credit": item.base_net_amount,
 			"credit_in_account_currency": item.base_net_amount,
 			"cost_center": item.cost_center,
-			"voucher_detail_no": item.name,
 			"posting_date": doc.posting_date
 		}, item=item))
 
@@ -141,7 +153,6 @@ def make_gl_entries_on_dn_submit(doc, method):
 			"debit": item.base_net_amount,
 			"debit_in_account_currency": item.base_net_amount,
 			"cost_center": item.cost_center,
-			"voucher_detail_no": item.name,
 			"posting_date": doc.posting_date
 		}, item=item))
 
@@ -169,7 +180,7 @@ def post_delivery_note_entries(start_date=None, end_date=None):
 def book_deferred_income(doc, posting_date=None):
 	def _book_deferred_income(item):
 		start_date, end_date, last_gl_entry = get_booking_dates(doc, item, posting_date=posting_date)
-		print(start_date, end_date)
+
 		if not (start_date and end_date): return
 
 		deferred_account = item.deferred_revenue_account or frappe.db.get_value('Company', doc.company, 'default_deferred_income_account')
@@ -220,9 +231,6 @@ def get_booking_dates(doc, item, posting_date=None):
 	if end_date >= item.end_date:
 		end_date = item.end_date
 		last_gl_entry = True
-	# elif item.stop_date and end_date >= item.stop_date:
-	# 	end_date = item.stop_date
-	# 	last_gl_entry = True
 
 	if end_date > getdate(posting_date):
 		end_date = posting_date
@@ -295,8 +303,6 @@ def get_already_booked_amount(doc, item):
 def make_gl_entries_for_dn(doc, credit_account, debit_account, against,
 	amount, base_amount, posting_date, project, account_currency, item):
 
-	print(credit_account, debit_account)
-
 	if amount == 0: return
 
 	gl_entries = []
@@ -337,3 +343,93 @@ def make_gl_entries_for_dn(doc, credit_account, debit_account, against,
 			frappe.log_error(message=traceback)
 
 			frappe.flags.deferred_accounting_error = True
+
+def book_ltds(doc, method):
+	gross_tds_account = frappe.db.get_value('Company', doc.company, 'gross_tds_account')
+	gl_entries = []
+	for d in accounts:
+		if d.account == gross_tds_account and d.sales_invoice and d.credit:
+			doc = frappe.get_doc('Sales Invoice', d.sales_invoice)
+			for item in doc.get('items'):
+				service_start_date = getdate(item.start_date)
+				service_end_date = getdate(item.end_date)
+
+				if service_start_date and service_end_date:
+					no_of_months = (service_end_date.year - service_start_date.year) * 12 + \
+						(service_end_date.month - service_start_date.month) + 1
+
+					for i in range(no_of_months):
+						fiscal_year = get_fiscal_year(date=add_months(service_start_date, i))[0]
+
+						tds_account = account_fiscal_year_map.get(fiscal_year)
+
+						if not tds_account:
+							frappe.throw(_('Please enter TDS Account for Fiscal Year {0} in company master').format(
+								frappe.bold(fiscal_year)))
+
+						tds_amount_to_consider = d.credit * (item.amount /doc.net_total)
+
+						amount = tds_amount_to_consider / no_of_months
+
+						gl_entries.append(
+							payment_entry.get_gl_dict({
+								"account": tds_account,
+								"against": payment_entry.party,
+								"credit": amount,
+								"credit_in_account_currency": amount,
+								"cost_center": item.cost_center
+							}, payment_entry.party_account_currency, item=item)
+						)
+
+						gl_entries.append(
+							payment_entry.get_gl_dict({
+								"account": d.account,
+								"against": payment_entry.party,
+								"debit": amount,
+								"debit_in_account_currency": amount,
+								"cost_center": item.cost_center
+							}, payment_entry.party_account_currency, item=item)
+						)
+				else:
+					amount = d.amount * (item.amount/doc.net_total)
+					fiscal_year = get_fiscal_year(date=payment_entry.posting_date)[0]
+					tds_account = account_fiscal_year_map.get(fiscal_year)
+
+					gl_entries.append(
+						payment_entry.get_gl_dict({
+							"account": tds_account,
+							"against": payment_entry.party,
+							"debit": amount,
+							"debit_in_account_currency": amount,
+							"cost_center": item.cost_center
+						}, payment_entry.party_account_currency, item=item)
+					)
+
+					gl_entries.append(
+						payment_entry.get_gl_dict({
+							"account": d.account,
+							"against": payment_entry.party,
+							"credit": amount,
+							"credit_in_account_currency": amount,
+							"cost_center": item.cost_center
+						}, payment_entry.party_account_currency, item=item)
+					)
+
+			booked_invoices.append(invoice.reference_name)
+
+			make_gl_entries(gl_entries)
+			# doc.get_gl_dict({
+			# 	"account": d.account,
+			# 	"against": d.against_account,
+			# 	"debit": flt(d.debit, d.precision("debit")),
+			# 	"account_currency": d.account_currency,
+			# 	"debit_in_account_currency": flt(d.debit_in_account_currency, d.precision("debit_in_account_currency")),
+			# 	"against_voucher_type": d.reference_type,
+			# 	"against_voucher": d.reference_name,
+			# 	"remarks": remarks,
+			# 	"voucher_detail_no": d.reference_detail_no,
+			# 	"cost_center": d.cost_center,
+			# 	"project": d.project,
+			# 	"finance_book": self.finance_book
+			# })
+
