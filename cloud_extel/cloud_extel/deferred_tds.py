@@ -134,7 +134,7 @@ def make_gl_entries_on_dn_submit(doc, method):
 			if not debit_account:
 				frappe.throw(_('Please select Deferred revenue account for item {0}').format(item.item_code))
 		else:
-			debit_account = frappe.db.get_value('Item Default', {'company': doc.company}, 'income_account')
+			debit_account = frappe.db.get_value('Item Default', {'company': doc.company, 'parent': item.item_code}, 'income_account')
 			if not debit_account:
 				frappe.throw(_('Please set default Income Account for Item {0}').format(item.item_code))
 
@@ -170,7 +170,7 @@ def post_delivery_note_entries(start_date=None, end_date=None):
 		from `tabDelivery Note Item` item, `tabDelivery Note` p
 		where item.start_date<=%s and item.end_date>=%s
 		and item.deferred_revenue = 1 and item.parent=p.name
-		and item.docstatus = 1 and ifnull(item.amount, 0) > 0
+		and p.docstatus = 1 and ifnull(item.amount, 0) > 0
 	''', (end_date, start_date)) #nosec
 
 	for delivery_note in delivery_notes:
@@ -184,7 +184,7 @@ def book_deferred_income(doc, posting_date=None):
 		if not (start_date and end_date): return
 
 		deferred_account = item.deferred_revenue_account or frappe.db.get_value('Company', doc.company, 'default_deferred_income_account')
-		income_account = frappe.db.get_value('Item Default', {'company': doc.company}, 'income_account')
+		income_account = frappe.db.get_value('Item Default', {'company': doc.company, 'parent': item.item_code}, 'income_account')
 		account_currency = get_account_currency(deferred_account)
 
 		against, project = doc.customer, doc.project
@@ -253,6 +253,7 @@ def calculate_monthly_amount(doc, item, last_gl_entry, start_date, end_date, tot
 		actual_months = rounded(total_months * prorate_factor, 1)
 
 		already_booked_amount, already_booked_amount_in_account_currency = get_already_booked_amount(doc, item)
+
 		base_amount = flt(item.base_net_amount / actual_months, item.precision("base_net_amount"))
 
 		if base_amount + already_booked_amount > item.base_net_amount:
@@ -269,8 +270,15 @@ def calculate_monthly_amount(doc, item, last_gl_entry, start_date, end_date, tot
 			partial_month = flt(date_diff(end_date, start_date)) \
 				/ flt(date_diff(get_last_day(end_date), get_first_day(start_date)))
 
-			base_amount = rounded(partial_month, 1) * base_amount
-			amount = rounded(partial_month, 1) * amount
+			partial_month = rounded(partial_month, 1)
+
+			# very less no of days to get rounded partial month
+			# book on basis of days
+			if not partial_month:
+				partial_month = flt(total_booking_days/total_days)
+
+			base_amount = partial_month * base_amount
+			amount = partial_month * amount
 	else:
 		already_booked_amount, already_booked_amount_in_account_currency = get_already_booked_amount(doc, item)
 		base_amount = flt(item.base_net_amount - already_booked_amount, item.precision("base_net_amount"))
