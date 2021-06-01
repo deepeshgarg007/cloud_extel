@@ -87,12 +87,12 @@ doc_events = {
 	"Payment Entry": {
 		"on_submit": "cloud_extel.cloud_extel.deferred_tds.post_tds_gl_entries",
 	},
-	"Delivery Note": {
-		"on_submit": "cloud_extel.cloud_extel.deferred_tds.make_gl_entries_on_dn_submit"
-	},
-	"Sales Invoice": {
-		"on_submit": "cloud_extel.cloud_extel.deferred_tds.reverse_provision_entry"
-	},
+	# "Delivery Note": {
+	# 	"on_submit": "cloud_extel.cloud_extel.deferred_tds.make_gl_entries_on_dn_submit"
+	# },
+	# "Sales Invoice": {
+	# 	"on_submit": "cloud_extel.cloud_extel.deferred_tds.reverse_provision_entry"
+	# },
 	# "Journal Entry": {
 	# 	"on_submit": "cloud_extel.cloud_extel.deferred_tds.book_ltds"
 	# }
